@@ -1,0 +1,45 @@
+# .github/workflows/tyml-validate.yml
+name: Validate TOML with TYML
+
+on:
+  push:
+    paths:
+      - 'servers.toml'
+      - '.github/workflows/tyml-validate.yml'
+  pull_request:
+    paths:
+      - 'servers.toml'
+      - '.github/workflows/tyml-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  tyml-validate:
+    name: tyml servers.toml
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Install tyml CLI
+        run: |
+          if ! command -v tyml >/dev/null 2>&1; then
+            cargo install tyml_core
+          fi
+          tyml --version || true
+
+      - name: Validate servers.toml with tyml
+        shell: bash
+        run: |
+          test -f servers.toml || { echo "servers.toml not found"; exit 1; }
+          tyml servers.toml
