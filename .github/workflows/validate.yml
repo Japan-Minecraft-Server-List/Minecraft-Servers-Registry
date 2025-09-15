@@ -1,45 +1,33 @@
-# .github/workflows/tyml-validate.yml
 name: Validate TOML with TYML
 
 on:
   push:
-    paths:
-      - 'servers.toml'
-      - '.github/workflows/tyml-validate.yml'
-  pull_request:
-    paths:
-      - 'servers.toml'
-      - '.github/workflows/tyml-validate.yml'
-  workflow_dispatch:
+    branches:
+      - '**'          # すべてのブランチの push（= 各コミット）で実行
+  pull_request:       # PR 上の各コミットでも実行（任意）
+  workflow_dispatch:  # 手動実行（任意）
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  # 同じブランチで新しい push が来たら古い実行をキャンセル
 
 jobs:
   tyml-validate:
-    name: tyml servers.toml
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
+    permissions: { contents: read }
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo build artifacts
-        uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with: { cache-on-failure: true }
       - name: Install tyml CLI
         run: |
           if ! command -v tyml >/dev/null 2>&1; then
             cargo install tyml_core
           fi
           tyml --version || true
-
       - name: Validate servers.toml with tyml
-        shell: bash
         run: |
           test -f servers.toml || { echo "servers.toml not found"; exit 1; }
           tyml servers.toml
+
