@@ -5,10 +5,3 @@ ip = "azisaba.net"
 icon = "cod"
 name = "アジ鯖"
 description = "&7アジ鯖、楽しい。"
-
-[[servers]]
-ip = "localhost"
-port = 25566
-icon = "grass_block"
-name = "ローカルサーバー"
-description = ""
